@@ -47,6 +47,9 @@ reset:
     ldi temp, 0b00000011
     out PORTB, temp
 
+    ; Empiezo mostrando el asterisco
+    ldi figura, 0
+
 main:
 
     ; Si aprieto el boton 1 elijo el asterisco
