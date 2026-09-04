@@ -86,7 +86,7 @@ bucle_corazon:
     inc indice
 
     cpi indice, 8
-    brlo bucle_cara
+    brlo bucle_corazon
 
     rjmp main
 
