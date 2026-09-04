@@ -1,1 +1,53 @@
+.include "m328pdef.inc"
 
+.def temp    = r16
+.def dato    = r17
+.def indice  = r18
+.def figura  = r19
+.def mascara = r20
+
+.org 0x0000
+    rjmp reset
+
+
+reset:
+
+    ; Configuro el Stack
+    ldi temp, HIGH(RAMEND)
+    out SPH, temp
+
+    ldi temp, LOW(RAMEND)
+    out SPL, temp
+
+
+    ; PORTD son las filas de la matriz
+    ldi temp, 0xFF
+    out DDRD, temp
+
+    ; Empiezo con todas las filas apagadas
+    ldi temp, 0xFF
+    out PORTD, temp
+
+
+    ; PC0 a PC5 son 6 de las columnas
+    ldi temp, 0x3F
+    out DDRC, temp
+
+    ; Empiezo con las columnas apagadas
+    ldi temp, 0x00
+    out PORTC, temp
+
+
+    ; PB0 y PB1 son los botones
+    ; PB2 y PB3 son las otras 2 columnas
+    ldi temp, 0b00001100
+    out DDRB, temp
+
+    ; Activo el pull-up de los botones
+    ldi temp, 0b00000011
+    out PORTB, temp
+
+
+main:
+
+    rjmp main
