@@ -48,19 +48,17 @@ reset:
     out PORTB, temp
 
 main:
+main:
 
-     ; Si aprieto el boton 1 muestro el asterisco
+    ; Si aprieto el boton 1 elijo el asterisco
     sbis PINB, PB0
     rjmp SELECCION_ASTERISCO
 
-    ; Si aprieto el boton 2 muestro XD
+    ; Si aprieto el boton 2 elijo XD
     sbis PINB, PB1
     rjmp SELECCION_XD
 
-    ; Si no aprieto nada queda el asterisco
-    rjmp MOSTRAR_ASTERISCO
-
-    ; Veo cual figura estaba seleccionada
+    ; Si no aprieto nada miro cual quedo seleccionado
     cpi figura, 0
     breq MOSTRAR_ASTERISCO
 
