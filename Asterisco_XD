@@ -49,9 +49,28 @@ reset:
 
 main:
 
-    ; Por ahora muestro solamente el asterisco
+     ; Si aprieto el boton 1 muestro el asterisco
+    sbis PINB, PB0
+    rjmp SELECCION_ASTERISCO
+
+    ; Si aprieto el boton 2 muestro XD
+    sbis PINB, PB1
+    rjmp SELECCION_XD
+
+    ; Si no aprieto nada queda el asterisco
     rjmp MOSTRAR_ASTERISCO
 
+
+SELECCION_ASTERISCO:
+
+    ldi figura, 0
+    rjmp MOSTRAR_ASTERISCO
+
+
+SELECCION_XD:
+
+    ldi figura, 1
+    rjmp MOSTRAR_XD
 
     ; Mostrar el asterisco
 
@@ -75,6 +94,27 @@ BUCLE_ASTERISCO:
 
     rjmp main
 
+    ; Mostrar XD
+
+MOSTRAR_XD:
+
+    ; Arranco desde la primera fila
+    ldi indice, 0
+
+
+BUCLE_XD:
+
+    ; Muestro una fila
+    rcall MOSTRAR_FILA_XD
+
+    ; Paso a la siguiente
+    inc indice
+
+    ; Lo hago para las 8 filas
+    cpi indice, 8
+    brlo BUCLE_XD
+
+    rjmp main
 
     ; Filas del asterisco
 
@@ -138,6 +178,67 @@ FILA_ASTERISCO_LISTA:
 
     ret
 
+; Filas del XD
+
+MOSTRAR_FILA_XD:
+
+    ; Primero apago todas las filas
+    ldi temp, 0xFF
+    out PORTD, temp
+
+    ; Apago las primeras 6 columnas
+    ldi temp, 0x00
+    out PORTC, temp
+
+    ; Apago las otras 2 columnas
+    in temp, PORTB
+    andi temp, 0b11110011
+    out PORTB, temp
+
+
+    ; Empiezo en la primera fila
+    ldi mascara, 1
+    mov temp, indice
+
+
+DESPLAZA_XD:
+
+    ; Busco la fila que tengo que prender
+    tst temp
+    breq FILA_XD_LISTA
+
+    lsl mascara
+    dec temp
+
+    rjmp DESPLAZA_XD
+
+
+FILA_XD_LISTA:
+
+    ; Prendo solamente la fila que toca
+    in temp, PORTD
+    com mascara
+    and temp, mascara
+    out PORTD, temp
+
+
+    ; Busco los LEDs del XD
+    ldi ZH, HIGH(XD*2)
+    ldi ZL, LOW(XD*2)
+
+    add ZL, indice
+    clr temp
+    adc ZH, temp
+
+    lpm dato, Z
+
+    rcall ESCRIBIR_COLUMNAS
+
+    ; Espero un poquito
+    rcall DELAY
+
+    ret
+
 
     ; Aca prendo las columnas que necesito
 
@@ -180,6 +281,18 @@ ASTERISCO:
     .db 0b00011000
     .db 0b00000000
 
+; Dibujo XD
+
+XD:
+
+    .db 0b10101110
+    .db 0b10101001
+    .db 0b01001001
+    .db 0b01001001
+    .db 0b01001001
+    .db 0b10101001
+    .db 0b10101110
+    .db 0b00000000
 
     ; Pequeño tiempo de espera
 
