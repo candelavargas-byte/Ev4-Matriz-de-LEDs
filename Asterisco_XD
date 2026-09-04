@@ -60,6 +60,12 @@ main:
     ; Si no aprieto nada queda el asterisco
     rjmp MOSTRAR_ASTERISCO
 
+    ; Veo cual figura estaba seleccionada
+    cpi figura, 0
+    breq MOSTRAR_ASTERISCO
+
+    rjmp MOSTRAR_XD
+
 
 SELECCION_ASTERISCO:
 
