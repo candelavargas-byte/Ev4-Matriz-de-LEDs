@@ -47,7 +47,156 @@ reset:
     ldi temp, 0b00000011
     out PORTB, temp
 
-
 main:
 
+    ; Por ahora muestro solamente el asterisco
+    rjmp MOSTRAR_ASTERISCO
+
+
+    ; Mostrar el asterisco
+
+MOSTRAR_ASTERISCO:
+
+    ; Arranco desde la primera fila
+    ldi indice, 0
+
+
+BUCLE_ASTERISCO:
+
+    ; Muestro una fila
+    rcall MOSTRAR_FILA_ASTERISCO
+
+    ; Paso a la siguiente
+    inc indice
+
+    ; Lo hago hasta llegar a las 8 filas
+    cpi indice, 8
+    brlo BUCLE_ASTERISCO
+
     rjmp main
+
+
+    ; Filas del asterisco
+
+MOSTRAR_FILA_ASTERISCO:
+
+    ; Primero apago todas las filas
+    ldi temp, 0xFF
+    out PORTD, temp
+
+    ; Apago las primeras 6 columnas
+    ldi temp, 0x00
+    out PORTC, temp
+
+    ; Apago las otras 2 columnas
+    in temp, PORTB
+    andi temp, 0b11110011
+    out PORTB, temp
+
+
+    ; Empiezo en la primera fila
+    ldi mascara, 1
+    mov temp, indice
+
+
+DESPLAZA_ASTERISCO:
+
+    ; Busco la fila que tengo que prender
+    tst temp
+    breq FILA_ASTERISCO_LISTA
+
+    lsl mascara
+    dec temp
+
+    rjmp DESPLAZA_ASTERISCO
+
+
+FILA_ASTERISCO_LISTA:
+
+    ; Prendo solamente la fila que toca
+    in temp, PORTD
+    com mascara
+    and temp, mascara
+    out PORTD, temp
+
+
+    ; Busco los LEDs que se tienen que prender
+    ldi ZH, HIGH(ASTERISCO*2)
+    ldi ZL, LOW(ASTERISCO*2)
+
+    add ZL, indice
+    clr temp
+    adc ZH, temp
+
+    lpm dato, Z
+
+    ; Mando el dibujo a las columnas
+    rcall ESCRIBIR_COLUMNAS
+
+    ; Espero un poquito antes de cambiar de fila
+    rcall DELAY
+
+    ret
+
+
+    ; Aca prendo las columnas que necesito
+
+ESCRIBIR_COLUMNAS:
+
+    ; Las primeras 6 columnas van por PORTC
+    mov temp, dato
+    andi temp, 0b00111111
+    out PORTC, temp
+
+
+    ; La columna 7 va por PB2
+    sbrc dato, 6
+    sbi PORTB, PB2
+
+    sbrs dato, 6
+    cbi PORTB, PB2
+
+
+    ; La columna 8 va por PB3
+    sbrc dato, 7
+    sbi PORTB, PB3
+
+    sbrs dato, 7
+    cbi PORTB, PB3
+
+    ret
+
+
+    ; Dibujo del asterisco
+
+ASTERISCO:
+
+    .db 0b00011000
+    .db 0b01011010
+    .db 0b00111100
+    .db 0b11111111
+    .db 0b00111100
+    .db 0b01011010
+    .db 0b00011000
+    .db 0b00000000
+
+
+    ; Pequeño tiempo de espera
+
+DELAY:
+
+    ldi r21, 30
+
+D1:
+
+    ldi r22, 50
+
+D2:
+
+    dec r22
+    brne D2
+
+    dec r21
+    brne D1
+
+    ret
