@@ -274,31 +274,21 @@ ESCRIBIR_COLUMNAS:
     ret
 
 
-    ; Dibujo del asterisco
+   ; Dibujo del asterisco
 
 ASTERISCO:
+    .db 0b00011000, 0b01011010
+    .db 0b00111100, 0b11111111
+    .db 0b00111100, 0b01011010
+    .db 0b00011000, 0b00000000
 
-    .db 0b00011000
-    .db 0b01011010
-    .db 0b00111100
-    .db 0b11111111
-    .db 0b00111100
-    .db 0b01011010
-    .db 0b00011000
-    .db 0b00000000
-
-; Dibujo XD
+    ; Dibujo XD
 
 XD:
-
-    .db 0b10101110
-    .db 0b10101001
-    .db 0b01001001
-    .db 0b01001001
-    .db 0b01001001
-    .db 0b10101001
-    .db 0b10101110
-    .db 0b00000000
+    .db 0b10101110, 0b10101001
+    .db 0b01001001, 0b01001001
+    .db 0b01001001, 0b10101001
+    .db 0b10101110, 0b00000000
 
     ; Pequeño tiempo de espera
 
