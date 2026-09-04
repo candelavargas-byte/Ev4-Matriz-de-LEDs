@@ -1,0 +1,311 @@
+.include "m328pdef.inc"
+
+.def temp    = r16
+.def dato    = r17
+.def indice  = r18
+.def figura  = r19
+.def mascara = r20
+
+.org 0x0000
+    rjmp reset
+
+
+reset:
+
+    ; Configuro el Stack
+    ldi temp, HIGH(RAMEND)
+    out SPH, temp
+
+    ldi temp, LOW(RAMEND)
+    out SPL, temp
+
+
+    ; PORTD son las filas de la matriz
+    ldi temp, 0xFF
+    out DDRD, temp
+
+    ; Empiezo con todas las filas apagadas
+    ldi temp, 0xFF
+    out PORTD, temp
+
+
+    ; PC0 a PC5 son 6 de las columnas
+    ldi temp, 0x3F
+    out DDRC, temp
+
+    ; Empiezo con las columnas apagadas
+    ldi temp, 0x00
+    out PORTC, temp
+
+
+    ; PB0 y PB1 son los botones
+    ; PB2 y PB3 son las otras 2 columnas
+    ldi temp, 0b00001100
+    out DDRB, temp
+
+    ; Activo el pull-up de los botones
+    ldi temp, 0b00000011
+    out PORTB, temp
+
+    ; Empiezo mostrando el asterisco
+    ldi figura, 0
+
+main:
+
+    ; Si aprieto el boton 1 elijo el asterisco
+    sbis PINB, PB0
+    rjmp SELECCION_ASTERISCO
+
+    ; Si aprieto el boton 2 elijo XD
+    sbis PINB, PB1
+    rjmp SELECCION_XD
+
+    ; Si no aprieto nada miro cual quedo seleccionado
+    cpi figura, 0
+    breq MOSTRAR_ASTERISCO
+
+    rjmp MOSTRAR_XD
+
+
+SELECCION_ASTERISCO:
+
+    ldi figura, 0
+    rjmp MOSTRAR_ASTERISCO
+
+
+SELECCION_XD:
+
+    ldi figura, 1
+    rjmp MOSTRAR_XD
+
+    ; Mostrar el asterisco
+
+MOSTRAR_ASTERISCO:
+
+    ; Arranco desde la primera fila
+    ldi indice, 0
+
+
+BUCLE_ASTERISCO:
+
+    ; Muestro una fila
+    rcall MOSTRAR_FILA_ASTERISCO
+
+    ; Paso a la siguiente
+    inc indice
+
+    ; Lo hago hasta llegar a las 8 filas
+    cpi indice, 8
+    brlo BUCLE_ASTERISCO
+
+    rjmp main
+
+    ; Mostrar XD
+
+MOSTRAR_XD:
+
+    ; Arranco desde la primera fila
+    ldi indice, 0
+
+
+BUCLE_XD:
+
+    ; Muestro una fila
+    rcall MOSTRAR_FILA_XD
+
+    ; Paso a la siguiente
+    inc indice
+
+    ; Lo hago para las 8 filas
+    cpi indice, 8
+    brlo BUCLE_XD
+
+    rjmp main
+
+    ; Filas del asterisco
+
+MOSTRAR_FILA_ASTERISCO:
+
+    ; Primero apago todas las filas
+    ldi temp, 0xFF
+    out PORTD, temp
+
+    ; Apago las primeras 6 columnas
+    ldi temp, 0x00
+    out PORTC, temp
+
+    ; Apago las otras 2 columnas
+    in temp, PORTB
+    andi temp, 0b11110011
+    out PORTB, temp
+
+
+    ; Empiezo en la primera fila
+    ldi mascara, 1
+    mov temp, indice
+
+
+DESPLAZA_ASTERISCO:
+
+    ; Busco la fila que tengo que prender
+    tst temp
+    breq FILA_ASTERISCO_LISTA
+
+    lsl mascara
+    dec temp
+
+    rjmp DESPLAZA_ASTERISCO
+
+
+FILA_ASTERISCO_LISTA:
+
+    ; Prendo solamente la fila que toca
+    in temp, PORTD
+    com mascara
+    and temp, mascara
+    out PORTD, temp
+
+
+    ; Busco los LEDs que se tienen que prender
+    ldi ZH, HIGH(ASTERISCO*2)
+    ldi ZL, LOW(ASTERISCO*2)
+
+    add ZL, indice
+    clr temp
+    adc ZH, temp
+
+    lpm dato, Z
+
+    ; Mando el dibujo a las columnas
+    rcall ESCRIBIR_COLUMNAS
+
+    ; Espero un poquito antes de cambiar de fila
+    rcall DELAY
+
+    ret
+
+; Filas del XD
+
+MOSTRAR_FILA_XD:
+
+    ; Primero apago todas las filas
+    ldi temp, 0xFF
+    out PORTD, temp
+
+    ; Apago las primeras 6 columnas
+    ldi temp, 0x00
+    out PORTC, temp
+
+    ; Apago las otras 2 columnas
+    in temp, PORTB
+    andi temp, 0b11110011
+    out PORTB, temp
+
+
+    ; Empiezo en la primera fila
+    ldi mascara, 1
+    mov temp, indice
+
+
+DESPLAZA_XD:
+
+    ; Busco la fila que tengo que prender
+    tst temp
+    breq FILA_XD_LISTA
+
+    lsl mascara
+    dec temp
+
+    rjmp DESPLAZA_XD
+
+
+FILA_XD_LISTA:
+
+    ; Prendo solamente la fila que toca
+    in temp, PORTD
+    com mascara
+    and temp, mascara
+    out PORTD, temp
+
+
+    ; Busco los LEDs del XD
+    ldi ZH, HIGH(XD*2)
+    ldi ZL, LOW(XD*2)
+
+    add ZL, indice
+    clr temp
+    adc ZH, temp
+
+    lpm dato, Z
+
+    rcall ESCRIBIR_COLUMNAS
+
+    ; Espero un poquito
+    rcall DELAY
+
+    ret
+
+
+    ; Aca prendo las columnas que necesito
+
+ESCRIBIR_COLUMNAS:
+
+    ; Las primeras 6 columnas van por PORTC
+    mov temp, dato
+    andi temp, 0b00111111
+    out PORTC, temp
+
+
+    ; La columna 7 va por PB2
+    sbrc dato, 6
+    sbi PORTB, PB2
+
+    sbrs dato, 6
+    cbi PORTB, PB2
+
+
+    ; La columna 8 va por PB3
+    sbrc dato, 7
+    sbi PORTB, PB3
+
+    sbrs dato, 7
+    cbi PORTB, PB3
+
+    ret
+
+
+   ; Dibujo del asterisco
+
+ASTERISCO:
+    .db 0b00011000, 0b01011010
+    .db 0b00111100, 0b11111111
+    .db 0b00111100, 0b01011010
+    .db 0b00011000, 0b00000000
+
+    ; Dibujo XD
+
+XD:
+    .db 0b10101110, 0b10101001
+    .db 0b01001001, 0b01001001
+    .db 0b01001001, 0b10101001
+    .db 0b10101110, 0b00000000
+
+    ; Pequeño tiempo de espera
+
+DELAY:
+
+    ldi r21, 30
+
+D1:
+
+    ldi r22, 50
+
+D2:
+
+    dec r22
+    brne D2
+
+    dec r21
+    brne D1
+
+    ret
