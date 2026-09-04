@@ -48,7 +48,6 @@ reset:
     out PORTB, temp
 
 main:
-main:
 
     ; Si aprieto el boton 1 elijo el asterisco
     sbis PINB, PB0
